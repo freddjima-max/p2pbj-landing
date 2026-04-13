@@ -35,6 +35,7 @@ export default function LandingPage() {
             <a href="#fonctionnalites" className="hover:text-[#008751] transition-colors">Fonctionnalités</a>
             <a href="#comment" className="hover:text-[#008751] transition-colors">Comment ça marche</a>
             <a href="#investisseurs" className="hover:text-[#008751] transition-colors">Investisseurs</a>
+            <a href="/admin" className="hover:text-[#008751] transition-colors text-gray-400 text-xs">Admin</a>
           </div>
 
           <div className="hidden md:flex items-center gap-3">
@@ -343,7 +344,7 @@ export default function LandingPage() {
               </div>
 
               <a
-                href="mailto:invest@p2pbj.app"
+                href="mailto:invest@p2pmarketplace.net"
                 className="inline-flex items-center gap-2 bg-[#FCD116] text-gray-900 px-7 py-4 rounded-full font-bold hover:bg-yellow-300 transition-colors"
               >
                 Contacter l'équipe
@@ -385,37 +386,31 @@ export default function LandingPage() {
             Téléchargez P2P.BJ gratuitement et rejoignez des milliers de Béninois qui achètent et vendent en toute confiance.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center opacity-60 cursor-not-allowed">
             {/* Google Play */}
-            <a
-              href="#"
-              className="flex items-center gap-3 bg-black text-white px-6 py-4 rounded-2xl hover:bg-gray-900 transition-colors border border-white/20"
-            >
+            <div className="flex items-center gap-3 bg-black text-white px-6 py-4 rounded-2xl border border-white/20">
               <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white">
                 <path d="M3.18 23.76c.36.2.77.24 1.16.12l12.93-7.47-2.9-2.9-11.19 10.25zM.5 1.4C.19 1.83 0 2.4 0 3.1v17.8c0 .7.19 1.27.5 1.7l.09.09 9.97-9.97v-.24L.59 1.31.5 1.4zM20.12 10.52l-2.57-1.48-3.22 3.22 3.22 3.22 2.58-1.49c.74-.43.74-1.1 0-1.47h-.01zM4.34.12L17.27 7.6l-2.9 2.9L3.18.24C3.57.12 3.98.12 4.34.12z" />
               </svg>
               <div className="text-left">
-                <p className="text-xs text-gray-400">Disponible sur</p>
+                <p className="text-xs text-gray-400">Bientôt sur</p>
                 <p className="font-bold text-sm">Google Play</p>
               </div>
-            </a>
+            </div>
 
             {/* App Store */}
-            <a
-              href="#"
-              className="flex items-center gap-3 bg-black text-white px-6 py-4 rounded-2xl hover:bg-gray-900 transition-colors border border-white/20"
-            >
+            <div className="flex items-center gap-3 bg-black text-white px-6 py-4 rounded-2xl border border-white/20">
               <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white">
                 <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
               </svg>
               <div className="text-left">
-                <p className="text-xs text-gray-400">Disponible sur</p>
+                <p className="text-xs text-gray-400">Bientôt sur</p>
                 <p className="font-bold text-sm">App Store</p>
               </div>
-            </a>
+            </div>
           </div>
 
-          <p className="mt-6 text-green-200 text-sm">Bientôt disponible — inscrivez-vous pour être notifié au lancement</p>
+          <p className="mt-6 text-green-200 text-sm">Lancement imminent — inscrivez-vous pour être notifié</p>
         </div>
       </section>
 
@@ -444,7 +439,7 @@ export default function LandingPage() {
               <ul className="space-y-2 text-sm">
                 <li><a href="#" className="hover:text-white transition-colors">À propos</a></li>
                 <li><a href="#investisseurs" className="hover:text-white transition-colors">Investisseurs</a></li>
-                <li><a href="mailto:contact@p2pbj.app" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="mailto:contact@p2pmarketplace.net" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
 
@@ -459,7 +454,7 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
-            <p>© 2025 P2P.BJ — Tous droits réservés 🇧🇯</p>
+            <p>© 2026 P2P.BJ — Tous droits réservés 🇧🇯</p>
             <p>Fait avec ❤️ au Bénin</p>
           </div>
         </div>

@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   description:
     "Achetez, vendez et louez entre particuliers au Bénin, sans intermédiaire et en toute sécurité. Paiement Mobile Money intégré.",
   keywords: "annonces Bénin, vente particulier, achat Bénin, P2P Bénin, marché digital Bénin",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
   openGraph: {
     title: "P2P.BJ — Le LeBonCoin du Bénin",
     description:
