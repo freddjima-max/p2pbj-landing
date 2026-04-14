@@ -18,11 +18,35 @@ import {
   Star,
   Zap,
   Globe,
+  Bell,
 } from "lucide-react";
 import { useState } from "react";
 
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [submitState, setSubmitState] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const handlePreInscription = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setSubmitState("loading");
+    try {
+      const res = await fetch("https://p2pbj-backend.onrender.com/api/v1/config/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      if (res.ok) {
+        setSubmitState("success");
+        setEmail("");
+      } else {
+        setSubmitState("error");
+      }
+    } catch {
+      setSubmitState("error");
+    }
+  };
 
   return (
     <main className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
@@ -376,41 +400,60 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── TELECHARGER ─────────────────────────────────────── */}
+      {/* ── PRE-INSCRIPTION ──────────────────────────────────── */}
       <section id="telecharger" className="py-20 px-4 sm:px-6 gradient-cta text-white text-center">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-xl mx-auto">
+          <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Bell size={32} className="text-[#FCD116]" />
+          </div>
           <h2 className="text-3xl sm:text-4xl font-black mb-4">
-            Prêt à commencer ?
+            Soyez parmi les premiers
           </h2>
-          <p className="text-green-100 mb-10 text-lg">
-            Téléchargez P2P.BJ gratuitement et rejoignez des milliers de Béninois qui achètent et vendent en toute confiance.
+          <p className="text-green-100 mb-8 text-lg">
+            P2P.BJ arrive bientôt. Laissez votre email pour être notifié en avant-première au lancement.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center opacity-60 cursor-not-allowed">
-            {/* Google Play */}
-            <div className="flex items-center gap-3 bg-black text-white px-6 py-4 rounded-2xl border border-white/20">
-              <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white">
-                <path d="M3.18 23.76c.36.2.77.24 1.16.12l12.93-7.47-2.9-2.9-11.19 10.25zM.5 1.4C.19 1.83 0 2.4 0 3.1v17.8c0 .7.19 1.27.5 1.7l.09.09 9.97-9.97v-.24L.59 1.31.5 1.4zM20.12 10.52l-2.57-1.48-3.22 3.22 3.22 3.22 2.58-1.49c.74-.43.74-1.1 0-1.47h-.01zM4.34.12L17.27 7.6l-2.9 2.9L3.18.24C3.57.12 3.98.12 4.34.12z" />
-              </svg>
-              <div className="text-left">
-                <p className="text-xs text-gray-400">Bientôt sur</p>
-                <p className="font-bold text-sm">Google Play</p>
-              </div>
+          {submitState === "success" ? (
+            <div className="bg-white/10 border border-white/20 rounded-2xl px-8 py-6">
+              <CheckCircle size={40} className="text-[#FCD116] mx-auto mb-3" />
+              <p className="text-white font-bold text-lg">Vous êtes inscrit !</p>
+              <p className="text-green-200 text-sm mt-1">On vous préviendra dès le lancement.</p>
             </div>
+          ) : (
+            <form onSubmit={handlePreInscription} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="votre@email.com"
+                className="flex-1 px-5 py-4 rounded-full text-gray-900 text-sm font-medium outline-none focus:ring-2 focus:ring-[#FCD116]"
+              />
+              <button
+                type="submit"
+                disabled={submitState === "loading"}
+                className="px-7 py-4 bg-[#FCD116] text-gray-900 rounded-full font-bold text-sm hover:bg-yellow-300 transition-colors disabled:opacity-60 whitespace-nowrap"
+              >
+                {submitState === "loading" ? "..." : "Me notifier"}
+              </button>
+            </form>
+          )}
 
-            {/* App Store */}
-            <div className="flex items-center gap-3 bg-black text-white px-6 py-4 rounded-2xl border border-white/20">
-              <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white">
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-              </svg>
-              <div className="text-left">
-                <p className="text-xs text-gray-400">Bientôt sur</p>
-                <p className="font-bold text-sm">App Store</p>
-              </div>
+          {submitState === "error" && (
+            <p className="mt-3 text-red-300 text-sm">Une erreur est survenue. Réessayez.</p>
+          )}
+
+          <div className="mt-10 flex items-center justify-center gap-6 opacity-50">
+            <div className="flex items-center gap-2 text-sm">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M3.18 23.76c.36.2.77.24 1.16.12l12.93-7.47-2.9-2.9-11.19 10.25zM.5 1.4C.19 1.83 0 2.4 0 3.1v17.8c0 .7.19 1.27.5 1.7l.09.09 9.97-9.97v-.24L.59 1.31.5 1.4zM20.12 10.52l-2.57-1.48-3.22 3.22 3.22 3.22 2.58-1.49c.74-.43.74-1.1 0-1.47h-.01zM4.34.12L17.27 7.6l-2.9 2.9L3.18.24C3.57.12 3.98.12 4.34.12z" /></svg>
+              Google Play
             </div>
+            <div className="flex items-center gap-2 text-sm">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>
+              App Store
+            </div>
+            <span className="text-sm">Bientôt disponible</span>
           </div>
-
-          <p className="mt-6 text-green-200 text-sm">Lancement imminent — inscrivez-vous pour être notifié</p>
         </div>
       </section>
 
