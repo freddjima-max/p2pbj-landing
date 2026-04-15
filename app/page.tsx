@@ -20,19 +20,92 @@ import {
   Globe,
   Bell,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? "https://p2pbj-backend.onrender.com";
+
+interface PublicStats {
+  totalAnnonces: number;
+  totalUsers: number;
+  totalCities: number;
+  waitlistCount: number;
+}
+
+// ── Hook count-up ──────────────────────────────────────────
+function useCountUp(target: number, duration = 1800, started = false) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!started || target === 0) return;
+    let start: number | null = null;
+    const step = (ts: number) => {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.floor(eased * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [target, started, duration]);
+  return value;
+}
+
+function formatCompact(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k`;
+  return String(n);
+}
+
+// ── Composant stat animé ───────────────────────────────────
+function StatItem({ value, label, suffix = "+", loading }: {
+  value: number; label: string; suffix?: string; loading: boolean;
+}) {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold: 0.3 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+
+  const animated = useCountUp(value, 1800, visible && !loading);
+
+  return (
+    <div ref={ref} className="p-4 text-center">
+      {loading ? (
+        <div className="h-10 w-24 bg-gray-200 animate-pulse rounded-lg mx-auto mb-2" />
+      ) : (
+        <p className="text-3xl font-black text-[#008751] tabular-nums">
+          {value >= 1000 ? formatCompact(animated) : animated}{suffix}
+        </p>
+      )}
+      <p className="text-sm text-gray-500 mt-1">{label}</p>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [submitState, setSubmitState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [stats, setStats] = useState<PublicStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Fetch des stats publiques
+  useEffect(() => {
+    fetch(`${API}/api/v1/config/stats`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setStats(data); })
+      .catch(() => {})
+      .finally(() => setStatsLoading(false));
+  }, []);
 
   const handlePreInscription = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
     setSubmitState("loading");
     try {
-      const res = await fetch("https://p2pbj-backend.onrender.com/api/v1/config/waitlist", {
+      const res = await fetch(`${API}/api/v1/config/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
@@ -40,6 +113,11 @@ export default function LandingPage() {
       if (res.ok) {
         setSubmitState("success");
         setEmail("");
+        // Invalider le cache stats pour refléter la nouvelle inscription
+        const data = await res.json().catch(() => null);
+        if (data?.count && stats) {
+          setStats({ ...stats, waitlistCount: data.count });
+        }
       } else {
         setSubmitState("error");
       }
@@ -47,6 +125,30 @@ export default function LandingPage() {
       setSubmitState("error");
     }
   };
+
+  // Chiffres affichés : réels si dispo, fallback statiques
+  const displayStats = [
+    {
+      value: stats?.totalAnnonces ?? 10000,
+      label: "Annonces publiées",
+      suffix: "+",
+    },
+    {
+      value: stats?.totalUsers ?? 5000,
+      label: "Utilisateurs inscrits",
+      suffix: "+",
+    },
+    {
+      value: stats?.totalCities ?? 12,
+      label: "Villes couvertes",
+      suffix: "",
+    },
+    {
+      value: stats?.waitlistCount ?? 0,
+      label: "Personnes en attente",
+      suffix: "",
+    },
+  ];
 
   return (
     <main className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
@@ -71,10 +173,7 @@ export default function LandingPage() {
             </a>
           </div>
 
-          <button
-            className="md:hidden p-2"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
+          <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -110,8 +209,7 @@ export default function LandingPage() {
               </span>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-6">
-                Le <span className="text-[#FCD116]">marché digital</span> des
-                Béninois
+                Le <span className="text-[#FCD116]">marché digital</span> des Béninois
               </h1>
 
               <p className="text-lg sm:text-xl text-green-100 mb-8 max-w-xl mx-auto lg:mx-0">
@@ -164,7 +262,6 @@ export default function LandingPage() {
                       </div>
                     </div>
 
-                    {/* Mock annonce cards */}
                     {[
                       { icon: "🏠", title: "Appartement F3 – Cotonou", price: "150 000 FCFA/mois", cat: "Immobilier" },
                       { icon: "🚗", title: "Toyota Corolla 2019", price: "6 500 000 FCFA", cat: "Véhicules" },
@@ -191,19 +288,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── STATS ───────────────────────────────────────────── */}
+      {/* ── STATS (dynamiques) ──────────────────────────────── */}
       <section className="bg-gray-50 py-12 px-4">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          {[
-            { value: "10 000+", label: "Annonces publiées" },
-            { value: "5 000+", label: "Utilisateurs actifs" },
-            { value: "12", label: "Catégories" },
-            { value: "100%", label: "Gratuit" },
-          ].map((stat, i) => (
-            <div key={i} className="p-4">
-              <p className="text-3xl font-black text-[#008751]">{stat.value}</p>
-              <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
-            </div>
+        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
+          {displayStats.map((s, i) => (
+            <StatItem
+              key={i}
+              value={s.value}
+              label={s.label}
+              suffix={s.suffix}
+              loading={statsLoading}
+            />
           ))}
         </div>
       </section>
@@ -276,7 +371,6 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-3 gap-8 relative">
             <div className="hidden md:block absolute top-8 left-1/4 right-1/4 h-0.5 bg-[#008751]/20" />
-
             {[
               {
                 step: "01",
@@ -409,6 +503,14 @@ export default function LandingPage() {
           <h2 className="text-3xl sm:text-4xl font-black mb-4">
             Soyez parmi les premiers
           </h2>
+
+          {/* Compteur waitlist dynamique */}
+          {!statsLoading && stats && stats.waitlistCount > 0 && (
+            <p className="text-[#FCD116] font-bold text-sm mb-3">
+              🔥 {stats.waitlistCount.toLocaleString("fr-FR")} personnes déjà inscrites
+            </p>
+          )}
+
           <p className="text-green-100 mb-8 text-lg">
             P2P.BJ arrive bientôt. Laissez votre email pour être notifié en avant-première au lancement.
           </p>
