@@ -3,30 +3,50 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import {
   LayoutDashboard, ShieldCheck, FileText, Wallet,
   Users, AlertTriangle, LogOut, Menu, X, ChevronRight,
+  Bell, Search,
 } from "lucide-react";
 import { getStoredUser, clearToken } from "@/lib/adminApi";
+import { ToastProvider } from "@/components/admin/Toast";
 
 const NAV = [
-  { href: "/admin/dashboard", icon: LayoutDashboard, label: "Tableau de bord" },
-  { href: "/admin/kyc",       icon: ShieldCheck,     label: "KYC Identité" },
-  { href: "/admin/annonces",  icon: FileText,        label: "Annonces" },
-  { href: "/admin/finances",  icon: Wallet,          label: "Finances & Escrow" },
-  { href: "/admin/agents",    icon: Users,           label: "Agents & Utilisateurs" },
-  { href: "/admin/litiges",   icon: AlertTriangle,   label: "Litiges & Signalements" },
+  { href: "/admin/dashboard", icon: LayoutDashboard, label: "Tableau de bord", color: "text-emerald-400" },
+  { href: "/admin/kyc",       icon: ShieldCheck,     label: "KYC Identité",    color: "text-blue-400" },
+  { href: "/admin/annonces",  icon: FileText,        label: "Annonces",         color: "text-violet-400" },
+  { href: "/admin/finances",  icon: Wallet,          label: "Finances & Escrow",color: "text-amber-400" },
+  { href: "/admin/agents",    icon: Users,           label: "Agents & Utilisateurs", color: "text-cyan-400" },
+  { href: "/admin/litiges",   icon: AlertTriangle,   label: "Litiges & Signalements", color: "text-rose-400" },
 ];
+
+const PAGE_TITLES: Record<string, string> = {
+  "/admin/dashboard": "Tableau de bord",
+  "/admin/kyc":       "KYC Identité",
+  "/admin/annonces":  "Annonces",
+  "/admin/finances":  "Finances & Escrow",
+  "/admin/agents":    "Agents & Utilisateurs",
+  "/admin/litiges":   "Litiges & Signalements",
+};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router   = useRouter();
   const pathname = usePathname();
-  const [user, setUser]       = useState<any>(null);
+  const [user, setUser]        = useState<any>(null);
   const [sideOpen, setSideOpen] = useState(false);
+  const [now, setNow]          = useState("");
 
   useEffect(() => {
-    if (pathname === "/admin") return; // page login, pas de vérif
+    const tick = () => setNow(new Date().toLocaleString("fr-FR", {
+      weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit"
+    }));
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (pathname === "/admin") return;
     const u = getStoredUser();
     if (!u || (u.role !== "super-admin" && u.role !== "agent")) {
       router.replace("/admin");
@@ -35,72 +55,75 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setUser(u);
   }, [pathname]);
 
-  const logout = () => {
-    clearToken();
-    router.replace("/admin");
-  };
+  const logout = () => { clearToken(); router.replace("/admin"); };
 
-  if (pathname === "/admin") return <>{children}</>;
+  if (pathname === "/admin") return <ToastProvider>{children}</ToastProvider>;
   if (!user) return null;
 
   const isSuperAdmin = user.role === "super-admin";
+  const pageTitle = PAGE_TITLES[pathname] ?? "Admin";
 
-  const Sidebar = () => (
+  const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-100">
+      <div className="px-5 py-6 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-[#006B3F] rounded-xl flex items-center justify-center">
+          <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/50">
             <ShieldCheck size={18} className="text-white" />
           </div>
           <div>
-            <p className="font-black text-gray-900 text-sm">P2P.BJ Admin</p>
-            <p className="text-xs text-gray-400">{isSuperAdmin ? "Super Admin" : "Agent"}</p>
+            <p className="font-black text-white text-sm tracking-tight">P2P.BJ</p>
+            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">
+              {isSuperAdmin ? "Super Admin" : "Agent"}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {NAV.filter(n => isSuperAdmin || !["finances", "agents"].some(k => n.href.includes(k))).map(({ href, icon: Icon, label }) => {
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest px-3 mb-3">Navigation</p>
+        {NAV.filter(n =>
+          isSuperAdmin || !["finances", "agents"].some(k => n.href.includes(k))
+        ).map(({ href, icon: Icon, label, color }) => {
           const active = pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
               onClick={() => setSideOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                 active
-                  ? "bg-[#006B3F] text-white shadow-sm"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
               }`}
             >
-              <Icon size={18} />
-              {label}
-              {active && <ChevronRight size={14} className="ml-auto" />}
+              <Icon size={17} className={active ? color : "text-slate-500 group-hover:text-slate-300"} />
+              <span className="flex-1">{label}</span>
+              {active && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
             </Link>
           );
         })}
       </nav>
 
-      {/* User + logout */}
-      <div className="p-4 border-t border-gray-100">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 bg-[#E6F4ED] rounded-full flex items-center justify-center">
-            <span className="text-xs font-bold text-[#006B3F]">
-              {user.displayName?.[0]?.toUpperCase() ?? "A"}
+      {/* User */}
+      <div className="px-3 py-4 border-t border-white/5">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 mb-2">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center flex-shrink-0">
+            <span className="text-xs font-black text-white">
+              {(user.displayName?.[0] ?? user.phone?.[0] ?? "A").toUpperCase()}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{user.displayName || user.phone}</p>
-            <p className="text-xs text-gray-400">{user.phone}</p>
+            <p className="text-sm font-semibold text-white truncate">{user.displayName || user.phone}</p>
+            <p className="text-[10px] text-slate-400">{user.phone}</p>
           </div>
         </div>
         <button
           onClick={logout}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
         >
-          <LogOut size={16} />
+          <LogOut size={15} />
           Déconnexion
         </button>
       </div>
@@ -108,42 +131,68 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   );
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Sidebar desktop */}
-      <aside className="hidden lg:flex flex-col w-60 bg-white border-r border-gray-100 shadow-sm flex-shrink-0">
-        <Sidebar />
-      </aside>
+    <ToastProvider>
+      <div className="flex h-screen bg-[#0f1117] overflow-hidden">
 
-      {/* Sidebar mobile (drawer) */}
-      {sideOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="w-60 bg-white shadow-xl flex flex-col">
-            <div className="flex justify-end p-4">
-              <button onClick={() => setSideOpen(false)} className="p-1 rounded-lg hover:bg-gray-100">
-                <X size={20} />
-              </button>
+        {/* Sidebar desktop */}
+        <aside className="hidden lg:flex flex-col w-60 bg-[#141924] border-r border-white/5 flex-shrink-0">
+          <SidebarContent />
+        </aside>
+
+        {/* Sidebar mobile (drawer) */}
+        {sideOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex">
+            <div className="w-60 bg-[#141924] border-r border-white/5 flex flex-col shadow-2xl">
+              <div className="flex justify-end p-4">
+                <button onClick={() => setSideOpen(false)} className="p-2 rounded-xl hover:bg-white/5 text-slate-400">
+                  <X size={20} />
+                </button>
+              </div>
+              <SidebarContent />
             </div>
-            <Sidebar />
+            <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={() => setSideOpen(false)} />
           </div>
-          <div className="flex-1 bg-black/40" onClick={() => setSideOpen(false)} />
+        )}
+
+        {/* Main */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+
+          {/* Topbar */}
+          <header className="flex items-center justify-between px-6 py-4 bg-[#141924]/80 backdrop-blur-md border-b border-white/5 flex-shrink-0">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSideOpen(true)}
+                className="lg:hidden p-2 rounded-xl hover:bg-white/5 text-slate-400"
+              >
+                <Menu size={20} />
+              </button>
+              <div>
+                <h1 className="font-black text-white text-lg leading-none">{pageTitle}</h1>
+                {now && <p className="text-xs text-slate-500 mt-0.5 capitalize">{now}</p>}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Notification bell */}
+              <button className="relative p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors">
+                <Bell size={17} />
+              </button>
+
+              {/* Avatar */}
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-lg">
+                <span className="text-xs font-black text-white">
+                  {(user.displayName?.[0] ?? user.phone?.[0] ?? "A").toUpperCase()}
+                </span>
+              </div>
+            </div>
+          </header>
+
+          {/* Content */}
+          <main className="flex-1 overflow-y-auto p-6 bg-[#0f1117]">
+            {children}
+          </main>
         </div>
-      )}
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Topbar mobile */}
-        <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
-          <button onClick={() => setSideOpen(true)} className="p-2 rounded-xl hover:bg-gray-100">
-            <Menu size={20} />
-          </button>
-          <span className="font-black text-gray-900">P2P.BJ Admin</span>
-        </header>
-
-        {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
       </div>
-    </div>
+    </ToastProvider>
   );
 }
